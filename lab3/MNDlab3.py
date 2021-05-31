@@ -1,175 +1,134 @@
 import random
-import numpy
-import scipy.stats
+import numpy as np
+from numpy.linalg import solve
+from scipy.stats import t
+quantity = 0
+for i in range(100):
+    x1min = -40
+    x1max = 20
+    x2min = 10
+    x2max = 60
+    x3min = -20
+    x3max = 20
 
-import tkinter.messagebox
+    ymax = 200 + (x1max + x2max + x3max) / 3
+    ymin = 200 + (x1min + x2min + x3min) / 3
 
-root = tkinter.Tk()
+    xn = [[1, 1, 1, 1],
+          [-1, -1, 1, 1],
+          [-1, 1, -1, 1],
+          [-1, 1, 1, -1]]
 
-x1_min = -40
-x1_max = 20
+    y1 = [random.randint(int(ymin), int(ymax)) for i in range(4)]
+    y2 = [random.randint(int(ymin), int(ymax)) for i in range(4)]
+    y3 = [random.randint(int(ymin), int(ymax)) for i in range(4)]
 
-x2_min = 10
-x2_max = 60
-
-x3_min = -20
-x3_max = 20
-
-xm_min = (x1_min + x2_min + x3_min) / 3
-xm_max = (x1_max + x2_max + x3_max) / 3
-y_min = 200 + xm_min
-y_max = 200 + xm_max
-
-xn = [[-1, -1, -1],
-      [-1, 1, 1],
-      [1, -1, 1],
-      [1, 1, -1]]
-
-x = [[10, -35, 10],
-     [10, 15, 15],
-     [60, -35, 15],
-     [60, 15, 10]]
-
-m = 2
-y = [[random.randint(int(y_min), int(y_max)) for i in range(m)] for j in range(4)]
-
-
-def kohren(dispersion, m):
-    gt = {1: 0.9065, 2: 0.7679, 3: 0.6841, 4: 0.6287, 5: 0.5892, 6: 0.5598, 7: 0.5365, 8: 0.5175, 9: 0.5017, 10: 0.4884}
-    gp = max(dispersion) / sum(dispersion)
-    return gp < gt[m - 1]
-
-
-def student(dispersion_reproduction, m, y_mean, xn):
-    dispersion_statistic_mark = (dispersion_reproduction / (4 * m)) ** 0.5
-
-    beta = [1 / 4 * sum(y_mean[j] for j in range(4))]
-    for i in range(3):
-        b = 0
-        for j in range(4):
-            b += y_mean[j] * xn[j][i]
-        beta.append(1 / 4 * b)
-
-    t = []
-    for i in beta:
-        t.append(abs(i) / dispersion_statistic_mark)
-
-    check_st = scipy.stats.t.ppf((1 + 0.95) / 2, (m - 1) * 4)
-
-    return t[0] > check_st, t[1] > check_st, t[2] > check_st, t[3] > check_st
-
-
-def fisher(m, d, y_mean, yo, dispersion_reproduction):
-    dispersion_ad = 0
+    Y = [[y1[0], y2[0], y3[0]],
+         [y1[1], y2[1], y3[1]],
+         [y1[2], y2[2], y3[2]],
+         [y1[3], y2[3], y3[3]]]
+    print("Матриця планування Y (m=3):")
     for i in range(4):
-        dispersion_ad += (yo[i] - y_mean[i]) ** 2
+        print(Y[i])
 
-    dispersion_ad = dispersion_ad * m / (4 - d)
+    x1 = [10, 10, 60, 60]
+    x2 = [-25, 10, -25, 10]
+    x3 = [10, 15, 15, 10]
 
-    fp = dispersion_ad / dispersion_reproduction
-    check_f = scipy.stats.f.ppf(0.95, 4 - d, (m - 1) * 4)
+    print("-------------------------- Перевірка за критерієм Кохрена --------------------------")
+    Y_average = []
+    for i in range(len(Y)):
+        Y_average.append(np.mean(Y[i], axis=0))
+    print("Середні значення відгуку за рядками:", Y_average[0], Y_average[1], Y_average[2], Y_average[3])
 
-    return fp < check_f
+    mx1 = np.average(x1)
+    mx2 = np.average(x2)
+    mx3 = np.average(x3)
+    my = np.average(Y_average)
 
+    a1 = (x1[0] * Y_average[0] + x1[1] * Y_average[1] + x1[2] * Y_average[2] + x1[3] * Y_average[3]) / 4
+    a2 = (x2[0] * Y_average[0] + x2[1] * Y_average[1] + x2[2] * Y_average[2] + x2[3] * Y_average[3]) / 4
+    a3 = (x3[0] * Y_average[0] + x3[1] * Y_average[1] + x3[2] * Y_average[2] + x3[3] * Y_average[3]) / 4
 
-def normalized_multiplier(x, y_mean):
-    mx = [0, 0, 0]
-    axx = [0, 0, 0]
-    ax = [0, 0, 0]
-    for i in range(3):
-        for j in range(4):
-            mx[i] += x[j][i]
-            axx[i] += x[j][i] ** 2
-            ax[i] += x[j][i] * y_mean[j]
-        mx[i] /= 4
-        axx[i] /= 4
-        ax[i] /= 4
+    a11 = (x1[0] * x1[0] + x1[1] * x1[1] + x1[2] * x1[2] + x1[3] * x1[3]) / 4
+    a22 = (x2[0] * x2[0] + x2[1] * x2[1] + x2[2] * x2[2] + x2[3] * x2[3]) / 4
+    a33 = (x3[0] * x3[0] + x3[1] * x3[1] + x3[2] * x3[2] + x3[3] * x3[3]) / 4
 
-    my = sum(y_mean) / 4
+    a12 = (x1[0] * x2[0] + x1[1] * x2[1] + x1[2] * x2[2] + x1[3] * x2[3]) / 4
+    a13 = (x1[0] * x3[0] + x1[1] * x3[1] + x1[2] * x3[2] + x1[3] * x3[3]) / 4
+    a23 = (x2[0] * x3[0] + x2[1] * x3[1] + x2[2] * x3[2] + x2[3] * x3[3]) / 4
 
-    a12 = (x[0][0] * x[0][1] + x[1][0] * x[1][1] + x[2][0] * x[2][1] + x[3][0] * x[3][1]) / 4
-    a13 = (x[0][0] * x[0][2] + x[1][0] * x[1][2] + x[2][0] * x[2][2] + x[3][0] * x[3][2]) / 4
-    a23 = (x[0][1] * x[0][2] + x[1][1] * x[1][2] + x[2][1] * x[2][2] + x[3][1] * x[3][2]) / 4
+    a32, a31, a21 = a23, a13, a12
 
-    a = numpy.array([[1, *mx],
-                     [mx[0], axx[0], a12, a13],
-                     [mx[1], a12, axx[1], a23],
-                     [mx[2], a13, a23, axx[2]]])
-    c = numpy.array([my, *ax])
-    b = numpy.linalg.solve(a, c)
-    return b
+    Deter1 = [[1, mx1, mx2, mx3], [mx1, a11, a12, a13], [mx2, a12, a22, a23], [mx3, a13, a23, a33]]
+    Deter2 = [my, a1, a2, a3]
+    B = [round(i, 4) for i in solve(Deter1, Deter2)]
 
+    ypr1 = B[0] + B[1] * x1[0] + B[2] * x2[0] + B[3] * x3[0]
+    ypr2 = B[0] + B[1] * x1[1] + B[2] * x2[1] + B[3] * x3[1]
+    ypr3 = B[0] + B[1] * x1[2] + B[2] * x2[2] + B[3] * x3[2]
+    ypr4 = B[0] + B[1] * x1[3] + B[2] * x2[3] + B[3] * x3[3]
+    print("Отримані практичні значення:", ypr1, ypr2, ypr3, ypr4)
 
-def next_m(arr):
-    for i in range(4):
-        arr[i].append(random.randint(int(y_min), int(y_max)))
+    dispersions = []
+    for i in range(len(Y)):
+        a = 0
+        for k in Y[i]:
+            a += (k - np.mean(Y[i], axis=0)) ** 2
+        dispersions.append(a / len(Y[i]))
+    print("Дисперсії:", dispersions)
 
+    Gp = max(dispersions) / sum(dispersions)
 
-while True:
-    while True:
-        y_mean = []
-        for i in range(4):
-            y_mean.append(sum(y[i]) / m)
-
-        dispersion = []
-        for i in range(len(y)):
-            dispersion.append(0)
-            for j in range(m):
-                dispersion[i] += (y_mean[i] - y[i][j]) ** 2
-            dispersion[i] /= m
-
-        dispersion_reproduction = sum(dispersion) / 4
-
-        if kohren(dispersion, m):
-            break
-        else:
-            m += 1
-            next_m(y)
-
-    k = student(dispersion_reproduction, m, y_mean, xn)
-    d = sum(k)
-
-    b = normalized_multiplier(x, y_mean)
-    b = [b[i] * k[i] for i in range(4)]
-
-    yo = []
-    for i in range(4):
-        yo.append(b[0] + b[1] * x[i][0] + b[2] * x[i][1] + b[3] * x[i][2])
-
-    if d == 4:
-        m += 1
-        next_m(y)
-
-    elif fisher(m, d, y_mean, yo, dispersion_reproduction):
-        break
-
+    Gt = 0.7679
+    if Gp < Gt:
+        print("Дисперсія однорідна")
     else:
-        m += 1
-        next_m(y)
+        print("Дисперсія неоднорідна")
 
-tkinter.Label(text="x1").grid()
+    print("------------- Перевірка значущості коефіцієнтів за критерієм Стьюдента -------------")
+    sb = sum(dispersions) / len(dispersions)
+    sbs = (sb / (4 * 3)) ** 0.5
 
-tkinter.Label(text="x2").grid(row=0, column=1)
-tkinter.Label(text="x3").grid(row=0, column=2)
-for i in range(m):
-    tkinter.Label(text="yi" + str(i + 1)).grid(row=0, column=i + 3)
-for i in range(len(x)):
-    for j in range(len(x[i])):
-        tkinter.Label(text=x[i][j]).grid(row=i + 1, column=j)
-for i in range(len(y)):
-    for j in range(len(y[i])):
-        tkinter.Label(text=(y[i][j])).grid(row=i + 1, column=j + 3)
-tkinter.Label(text="Рівняння регресії:").grid(columnspan=m + 3)
-text = "y = " + "{0:.2f}".format(b[0])
-for i in range(3):
-    if b[i + 1] != 0:
-        text = text + " + {0:.2f}".format(b[i + 1]) + " * x" + str(i + 1)
+    beta0 = (Y_average[0] * 1 + Y_average[1] * 1 + Y_average[2] * 1 + Y_average[3] * 1) / 4
+    beta1 = (Y_average[0] * (-1) + Y_average[1] * (-1) + Y_average[2] * 1 + Y_average[3] * 1) / 4
+    beta2 = (Y_average[0] * (-1) + Y_average[1] * 1 + Y_average[2] * (-1) + Y_average[3] * 1) / 4
+    beta3 = (Y_average[0] * (-1) + Y_average[1] * 1 + Y_average[2] * 1 + Y_average[3] * (-1)) / 4
 
-tkinter.Label(text=text).grid(columnspan=m + 3)
-tkinter.Label(text="Перевірка:").grid(columnspan=m + 3)
+    T = [abs(beta0) / sbs, abs(beta1) / sbs, abs(beta2) / sbs, abs(beta3) / sbs]
+    print("Значення t:", T[0], T[1], T[2], T[3])
 
-for i in range(4):
-    tkinter.Label(text="yc" + str(i + 1) + " =" + "{0:.2f}".format(y_mean[i])).grid(columnspan=m + 3)
-    tkinter.Label(text="y" + str(i + 1) + " = " + "{0:.2f}".format(yo[i])).grid(columnspan=m + 3)
+    d = 0
+    res = [0] * 4
+    Tf = 2.306
+    coefs1 = []
+    coefs2 = []
+    m = 3
+    n = 4
+    f3 = (m - 1) * n
+    for i in range(4):
+        if T[i] <= t.ppf(q=0.975, df=f3):
+            coefs2.append(B[i])
+            res[i] = 0
+        else:
+            coefs1.append(B[i])
+            res[i] = B[i]
+            d += 1
+    print("Незначущі коефіцієнти регресії:", coefs2)
+    quantity += len(coefs2)
 
-root.mainloop()
+    y_st = []
+    for i in range(4):
+        y_st.append(res[0] + res[1] * x1[i] + res[2] * x2[i] + res[3] * x3[i])
+    print("Значення з отриманими коефіцієнтами:", y_st)
+
+    print("-------------------- Перевірка адекватності за критерієм Фішера --------------------")
+    Sad = 3 * sum([(y_st[i] - Y_average[i]) ** 2 for i in range(4)]) / (4 - d)
+    Fp = Sad / sb
+    Ft = 4.5
+    print("Fp =", Fp)
+    if (Fp < Ft):
+        print("Рівняння регресії адекватне при рівні значимості 0.05")
+    else:
+        print("Рівняння регресії неадекватне при рівні значимості 0.05")
+print("Кількість незначимих коефіцієнтів:", quantity)

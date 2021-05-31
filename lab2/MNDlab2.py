@@ -14,6 +14,7 @@ x = [[-40, 30], [-40, 80], [20, 30], [20, 80]]
 m = 5
 k = 1
 d = {5: 2, 6: 2, 7: 2.17, 8: 2.17,9: 2.29, 10: 2.29, 11: 2.39, 12: 2.39, 13: 2.39, 14: 2.49, 15: 2.49, 16: 2.49, 17: 2.49, 18: 2.62, 19: 2.62, 20: 2.62}
+start = time.time()
 def romanovski(m, d, y, y_mean):
     dispersion = []
     for i in range(len(y)):
@@ -85,6 +86,7 @@ b = normalized_multiplier(xn, y_mean)
 print(b)
 a = naturalized_multipliers(x1_min, x1_max, x2_min, x2_max, b)
 print(a)
+print("Час перевірки однорідності дисперсії", time.time() - start)
 tkinter.Label(text="y = b0 + b1 * xн1 + b2 * xн2").grid(columnspan=m + 2)
 tkinter.Label(text="xн1").grid()
 tkinter.Label(text="xн2").grid(row=1, column=1)
